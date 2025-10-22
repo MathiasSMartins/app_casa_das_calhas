@@ -275,7 +275,6 @@ class HomePage extends StatelessWidget {
                 padding: EdgeInsets.all(20),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  // ajusta o valor conforme quiser
                   child: Image.asset(
                     'assets/images/fotosCalhas/calha17.jpg',
                     width: double.infinity,
