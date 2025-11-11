@@ -1,13 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/header.dart';
 import '../widgets/footer.dart';
 
-class ContactPage extends StatelessWidget {
+class ContactPage extends StatefulWidget {
   const ContactPage({super.key});
 
   @override
+  State<ContactPage> createState() => _ContactPageState();
+}
+
+class _ContactPageState extends State<ContactPage> {
+  final _firestore = FirebaseFirestore.instance;
+
+  final nomeController = TextEditingController();
+  final emailController = TextEditingController();
+  final assuntoController = TextEditingController();
+  final mensagemController = TextEditingController();
+
+  final _formKey = GlobalKey<FormState>();
+  bool _isSending = false;
+
+  Future<void> enviarMensagem() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSending = true);
+
+    try {
+      await _firestore.collection('contato').add({
+        'nome': nomeController.text,
+        'email': emailController.text,
+        'assunto': assuntoController.text,
+        'mensagem': mensagemController.text,
+        'data_envio': Timestamp.now(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mensagem enviada com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      _formKey.currentState?.reset();
+      nomeController.clear();
+      emailController.clear();
+      assuntoController.clear();
+      mensagemController.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao enviar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isSending = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final Color redColor = const Color(0xFFDC193A);
+    final redColor = const Color(0xFFDC193A);
 
     return Scaffold(
       appBar: const PreferredSize(
@@ -16,201 +70,78 @@ class ContactPage extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          // Cabeçalho com breadcrumb
           Container(
             width: double.infinity,
             color: Colors.grey.shade200,
             padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Contato',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/'),
-                      child: const Text(
-                        'Início',
-                        style: TextStyle(
-                          color: Color(0xFFDC193A),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      ' / Contato',
-                      style: TextStyle(color: Colors.black54, fontSize: 16),
-                    ),
-                  ],
-                ),
-              ],
+            child: const Text(
+              'Contato',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
           ),
-
           const SizedBox(height: 40),
 
-          // Conteúdo principal
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Informações de contato
-                const Text(
-                  'Entrar em contato',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: nomeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nome',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) =>
+                    value == null || value.isEmpty ? 'Informe o nome' : null,
                   ),
-                ),
-                const SizedBox(height: 10),
+                  const SizedBox(height: 20),
 
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  // alinha topo do ícone com topo do texto
-                  children: [
-                    const Icon(
-                      Icons.location_on,
-                      color: Color(0xFFDC193A),
-                      size: 24,
+                  TextFormField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'E-mail',
+                      border: OutlineInputBorder(),
                     ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      // alinha texto à esquerda
-                      children: const [
-                        Text(
-                          'Localização',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Rua dos Suíços, 4466 Galpão C - Vila Nova Joinville - SC',
-                          style: TextStyle(fontSize: 12, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  // alinha topo do ícone com topo do texto
-                  children: [
-                    const Icon(Icons.email, color: Color(0xFFDC193A), size: 24),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      // alinha texto à esquerda
-                      children: const [
-                        Text(
-                          'Email',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'vendas@shaluminino.com.br',
-                          style: TextStyle(fontSize: 12, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  // alinha topo do ícone com topo do texto
-                  children: [
-                    const Icon(Icons.phone, color: Color(0xFFDC193A), size: 24),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Whatsapp',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          '(47) 9 9942-6135',
-                          style: TextStyle(fontSize: 12, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 40),
-
-                // Formulário de contato
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Nome',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    validator: (value) =>
+                    value == null || value.isEmpty ? 'Informe o e-mail' : null,
                   ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'E-mail',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Mensagem',
-                    alignLabelWithHint: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  maxLines: 5,
-                ),
-                const SizedBox(height: 30),
+                  const SizedBox(height: 20),
 
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(
+                  TextFormField(
+                    controller: assuntoController,
+                    decoration: const InputDecoration(
+                      labelText: 'Assunto',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) =>
+                    value == null || value.isEmpty ? 'Informe o assunto' : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  TextFormField(
+                    controller: mensagemController,
+                    decoration: const InputDecoration(
+                      labelText: 'Mensagem',
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 5,
+                    validator: (value) =>
+                    value == null || value.isEmpty ? 'Informe a mensagem' : null,
+                  ),
+                  const SizedBox(height: 30),
+
+                  SizedBox(
                     width: 220,
                     child: ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Mensagem enviada!'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      },
+                      onPressed: _isSending ? null : enviarMensagem,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: redColor,
                         foregroundColor: Colors.white,
@@ -219,7 +150,9 @@ class ContactPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text(
+                      child: _isSending
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
                         'Enviar Mensagem',
                         style: TextStyle(
                           fontSize: 16,
@@ -229,15 +162,12 @@ class ContactPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 50),
-              ],
+                ],
+              ),
             ),
           ),
 
           const SizedBox(height: 50),
-
           const Footer(),
         ],
       ),
